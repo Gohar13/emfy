@@ -21,12 +21,15 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix' => 'webhooks'], function () {
+
     Route::group(['prefix' => 'amo'], function () {
+
         Route::group(['prefix' => 'contact'], function () {
             Route::post('added', [ContactController::class, 'added']);
             Route::post('updated', [ContactController::class, 'updated']);
         });
-        Route::group(['prefix' => 'deal'], function () {
+
+        Route::group(['prefix' => 'lead'], function () {
             Route::post('added', [LeadController::class, 'added']);
             Route::post('updated', [LeadController::class, 'updated']);
         });

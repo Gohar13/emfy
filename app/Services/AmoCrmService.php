@@ -18,6 +18,7 @@ class AmoCrmService implements CrmServiceInterface
 
     const ENTITY_ACTION_ADDED = 'add';
     const ENTITY_ACTION_UPDATED = 'update';
+    const ACCESS_TOKEN_FILE_NAME = 'token_info.json';
 
     public function __construct(AmoCRMApiClient $amoApiClient)
     {
@@ -34,10 +35,9 @@ class AmoCrmService implements CrmServiceInterface
     {
         $this->getToken();
 
-        $leadNotesService = $this->amoApiClient->notes($entityType);
-
         $noteModel = new CommonNote();
-        $noteModel->setEntityId($hookData['id'])->setText($actionType);
+        $noteModel->setEntityId($hookData['id'])->setText($this->getNoteData($actionType, $hookData));
+        $leadNotesService = $this->amoApiClient->notes($entityType);
         $leadNotesService->addOne($noteModel);
     }
 
@@ -63,7 +63,7 @@ class AmoCrmService implements CrmServiceInterface
             'baseDomain' => config('amo.base_domain'),
         ];
 
-        Storage::disk('private')->put('token_info.json', json_encode($data, true));
+        Storage::disk('private')->put(self::ACCESS_TOKEN_FILE_NAME, json_encode($data, true));
     }
 
     /**
@@ -71,7 +71,7 @@ class AmoCrmService implements CrmServiceInterface
      */
     public function getTokenFromFile(): AccessToken
     {
-        $accessToken = json_decode(Storage::disk('private')->get('token_info.json'), true);
+        $accessToken = json_decode(Storage::disk('private')->get(self::ACCESS_TOKEN_FILE_NAME), true);
 
         return new AccessToken([
             'access_token' => $accessToken['accessToken'],
@@ -90,13 +90,37 @@ class AmoCrmService implements CrmServiceInterface
         $accessToken = $this->getTokenFromFile();
 
         if (!$accessToken->hasExpired()) {
-
-            $this->saveTokenInFile($accessToken);
-
             $this->setAccessToken($accessToken);
         } else {
 
-            $this->amoApiClient->getOAuthClient()->getAccessTokenByRefreshToken($accessToken->getRefreshToken());
+            $newAccessToken = $this->amoApiClient->getOAuthClient()->getAccessTokenByRefreshToken($accessToken);
+            $this->saveTokenInFile($newAccessToken);
+            $this->setAccessToken($newAccessToken);
         }
+    }
+
+    /**
+     * @throws AmoCRMApiException
+     * @throws AmoCRMMissedTokenException
+     * @throws AmoCRMoAuthApiException
+     */
+    private function getNoteData($actionType, $data): string
+    {
+        $data =  match($actionType) {
+            self::ENTITY_ACTION_ADDED => [
+                'название' => $data['name'],
+                'ответственный' => $this->amoApiClient->users()->getOne($data['responsible_user_id'])->getName(),
+                'время_добавления_карточки' => date('Y-m-d H:i:s', $data['created_at']),
+            ],
+            self::ENTITY_ACTION_UPDATED => [
+                'название' => $data['name'],
+                'ответственный' => $this->amoApiClient->users()->getOne($data['responsible_user_id'])->getName(),
+                'время_изменения' => date('Y-m-d H:i:s', $data['updated_at']),
+            ]
+        };
+
+        return implode(', ', array_map(function ($key, $value) {
+            return str_replace('_', ' ', mb_strtoupper($key)) . ': ' . $value;
+        }, array_keys($data), $data));
     }
 }

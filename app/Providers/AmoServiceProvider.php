@@ -15,7 +15,11 @@ class AmoServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AmoCRMApiClient::class, function ($app) {
-            return new AmoCRMApiClient(config('amo.client_id'), config('amo.client_secret'),config('amo.redirect_uri'));
+            return new AmoCRMApiClient(
+                config('amo.client_id'),
+                config('amo.client_secret'),
+                config('amo.redirect_uri')
+            );
         });
     }
 }

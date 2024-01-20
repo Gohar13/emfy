@@ -9,7 +9,6 @@ use AmoCRM\Helpers\EntityTypesInterface;
 use App\Services\AmoCrmService;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class ContactController extends AmoController
 {
@@ -19,11 +18,13 @@ class ContactController extends AmoController
      * @throws AmoCRMoAuthApiException
      * @throws FileNotFoundException
      */
-    public function added(Request $request)
+    public function added(Request $request): void
     {
-        $hookData = $request->get('contacts')['add'][0];
-        $this->amoService->updateEntity(EntityTypesInterface::CONTACTS, AmoCrmService::ENTITY_ACTION_ADDED, $hookData);
-        Log::info('Contact:added '.json_encode($request->toArray(), true));
+        $this->amoService->updateEntity(
+            EntityTypesInterface::CONTACTS,
+            AmoCrmService::ENTITY_ACTION_ADDED,
+            $request->get('contacts')['add'][0]
+        );
     }
 
     /**
@@ -32,10 +33,12 @@ class ContactController extends AmoController
      * @throws FileNotFoundException
      * @throws AmoCRMoAuthApiException
      */
-    public function updated(Request $request)
+    public function updated(Request $request): void
     {
-        $hookData = $request->get('contacts')['update'][0];
-        $this->amoService->updateEntity(EntityTypesInterface::CONTACTS, AmoCrmService::ENTITY_ACTION_ADDED, $hookData);
-        Log::info('Contact:updated '.json_encode($request->toArray(), true));
+        $this->amoService->updateEntity(
+            EntityTypesInterface::CONTACTS,
+            AmoCrmService::ENTITY_ACTION_UPDATED,
+            $request->get('contacts')['update'][0]
+        );
     }
 }

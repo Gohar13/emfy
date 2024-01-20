@@ -9,7 +9,6 @@ use AmoCRM\Helpers\EntityTypesInterface;
 use App\Services\AmoCrmService;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class LeadController extends AmoController
 {
@@ -19,11 +18,13 @@ class LeadController extends AmoController
      * @throws AmoCRMoAuthApiException
      * @throws FileNotFoundException
      */
-    public function added(Request $request)
+    public function added(Request $request): void
     {
-        $hookData = $request->get('leads')['add'][0];
-        $this->amoService->updateEntity(EntityTypesInterface::LEADS, AmoCrmService::ENTITY_ACTION_ADDED, $hookData);
-        Log::info('Deal:added '.json_encode($hookData, true));
+        $this->amoService->updateEntity(
+            EntityTypesInterface::LEADS,
+            AmoCrmService::ENTITY_ACTION_ADDED,
+            $request->get('leads')['add'][0]
+        );
     }
 
     /**
@@ -32,10 +33,12 @@ class LeadController extends AmoController
      * @throws AmoCRMoAuthApiException
      * @throws FileNotFoundException
      */
-    public function updated(Request $request)
+    public function updated(Request $request): void
     {
-        $hookData = $request->get('leads')['update'][0];
-        $this->amoService->updateEntity(EntityTypesInterface::LEADS, AmoCrmService::ENTITY_ACTION_UPDATED, $hookData);
-        Log::info('Deal:updated '.json_encode($hookData, true));
+        $this->amoService->updateEntity(
+            EntityTypesInterface::LEADS,
+            AmoCrmService::ENTITY_ACTION_UPDATED,
+            $request->get('leads')['update'][0]
+        );
     }
 }
